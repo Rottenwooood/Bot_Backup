@@ -1,0 +1,7 @@
+build/
+install/
+log/
+my_lidar_data/
+*.pdf
+*.gv
+__pycache__/

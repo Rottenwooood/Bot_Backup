@@ -1,0 +1,52 @@
+mqtt_client:
+  ros__parameters:
+    broker:
+      host: "localhost"  # Jetson 自己运行 Mosquitto 服务器
+      port: 1883
+    
+    bridge:
+      # ==========================================
+      # 📤 Jetson 发送给电脑 (ROS -> MQTT)
+      # ==========================================
+      ros2_publisher:
+        # 1. 2D 激光雷达数据 (这是建图的核心)
+        lidar_bridge:
+          topic: "/scan"
+          mqtt_topic: "robot/scan"
+        
+        # 2. 动态坐标变换 (机器人在哪)
+        tf_bridge:
+          topic: "/tf"
+          mqtt_topic: "robot/tf"
+        
+        # 3. 静态坐标变换 (雷达装在哪)
+        tf_static_bridge:
+          topic: "/tf_static"
+          mqtt_topic: "robot/tf_static"
+          
+        # 4. 里程计 (辅助)
+        odom_bridge:
+          topic: "/Odometry"   # Fast-LIO 输出的话题通常是这个，注意大小写
+          mqtt_topic: "robot/odom"
+
+      # ==========================================
+      # 📥 Jetson 从电脑接收 (MQTT -> ROS)
+      # ==========================================
+      ros2_subscriber:
+        # 1. 接收导航目标点 (你在电脑 Rviz 上点的)
+        goal_bridge:
+          topic: "/goal_pose"
+          mqtt_topic: "robot/goal"
+          message_type: "geometry_msgs/msg/PoseStamped"
+
+        # 2. 接收键盘控制/急停指令
+        cmd_vel_bridge:
+          topic: "/cmd_vel"
+          mqtt_topic: "robot/cmd_vel"
+          message_type: "geometry_msgs/msg/Twist"
+        
+        # 3. 接收初始位姿 (如果你在 Rviz 上用 2D Pose Estimate)
+        initial_pose_bridge:
+          topic: "/initialpose"
+          mqtt_topic: "robot/initialpose"
+          message_type: "geometry_msgs/msg/PoseWithCovarianceStamped"
