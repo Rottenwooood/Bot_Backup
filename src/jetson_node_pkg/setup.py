@@ -23,7 +23,8 @@ setup(
     entry_points={
         'console_scripts':[
             'cmd_vel_converter = jetson_node_pkg.cmd_vel_converter:main',
-            'continuous_tf_pub = jetson_node_pkg.continuous_tf_pub:main'
+            'continuous_tf_pub = jetson_node_pkg.continuous_tf_pub:main',
+            'system_manager_node = jetson_node_pkg.system_manager_node:main',
         ],
     },
 )
