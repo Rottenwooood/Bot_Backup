@@ -35,6 +35,12 @@ def generate_launch_description():
         description='Directory to save maps'
     )
 
+    server_url_arg = DeclareLaunchArgument(
+        'server_url',
+        default_value='http://192.168.1.34:4001',
+        description='Server URL for map upload'
+    )
+
     system_manager_node = Node(
         package='jetson_node_pkg',
         executable='system_manager_node',
@@ -45,6 +51,7 @@ def generate_launch_description():
             'nav_package': LaunchConfiguration('nav_package'),
             'nav_launch_file': LaunchConfiguration('nav_launch_file'),
             'maps_dir': LaunchConfiguration('maps_dir'),
+            'server_url': LaunchConfiguration('server_url'),
         }],
         output='screen',
     )
@@ -55,5 +62,6 @@ def generate_launch_description():
         nav_package_arg,
         nav_launch_file_arg,
         maps_dir_arg,
+        server_url_arg,
         system_manager_node,
     ])

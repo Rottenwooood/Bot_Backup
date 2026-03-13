@@ -6,7 +6,7 @@ amcl:
     alpha3: 0.2
     alpha4: 0.2
     alpha5: 0.2
-    base_frame_id: "base_link" # <--- 终极修改点 1
+    base_frame_id: "base_link" 
     beam_skip_distance: 0.5
     beam_skip_error_threshold: 0.9
     beam_skip_threshold: 0.3
@@ -43,7 +43,7 @@ bt_navigator:
   ros__parameters:
     use_sim_time: False
     global_frame: map
-    robot_base_frame: base_link # <--- 终极修改点 2
+    robot_base_frame: base_link 
     odom_topic: /Odometry
     bt_loop_duration: 10
     default_server_timeout: 20
@@ -125,8 +125,8 @@ controller_server:
     general_goal_checker:
       stateful: True
       plugin: "nav2_controller::SimpleGoalChecker"
-      xy_goal_tolerance: 0.20
-      yaw_goal_tolerance: 0.25
+      xy_goal_tolerance: 0.25  # <--- 【修改】原为0.20，稍微放大，防止终点抽搐
+      yaw_goal_tolerance: 0.35 # <--- 【修改】原为0.25，放大角度容忍度，防止终点原地乱转
       
     FollowPath:
       plugin: "dwb_core::DWBLocalPlanner"
@@ -135,16 +135,16 @@ controller_server:
       min_vel_y: 0.0
       max_vel_x: 0.3
       max_vel_y: 0.0
-      max_vel_theta: 1.0
+      max_vel_theta: 0.6       # <--- 【修改】原为1.0，降低最大旋转速度，防止转弯时丢定位
       min_speed_xy: 0.0
       max_speed_xy: 0.3
       min_speed_theta: 0.0
       acc_lim_x: 1.5
       acc_lim_y: 0.0
-      acc_lim_theta: 2.0
+      acc_lim_theta: 1.0       # <--- 【修改】原为2.0，降低旋转加速度，让转弯起步更柔和
       decel_lim_x: -1.5
       decel_lim_y: 0.0
-      decel_lim_theta: -2.0
+      decel_lim_theta: -1.0    # <--- 【修改】原为-2.0，降低旋转减速度，刹车更平缓
       vx_samples: 20
       vy_samples: 5
       vtheta_samples: 20
@@ -154,6 +154,7 @@ controller_server:
       transform_tolerance: 0.2
       xy_goal_tolerance: 0.25
       trans_stopped_velocity: 0.25
+      rot_stopped_velocity: 0.25 # <--- 【新增】告诉系统旋转速度降到多少算“停稳”，彻底解决终点抽搐
       short_circuit_trajectory_evaluation: True
       stateful: True
       critics: ["RotateToGoal", "Oscillation", "BaseObstacle", "GoalAlign", "PathAlign", "PathDist", "GoalDist"]
@@ -174,7 +175,7 @@ local_costmap:
       update_frequency: 5.0
       publish_frequency: 2.0
       global_frame: camera_init 
-      robot_base_frame: base_link # <--- 终极修改点 3
+      robot_base_frame: base_link 
       use_sim_time: False
       rolling_window: true
       width: 3
@@ -195,7 +196,7 @@ local_costmap:
         z_voxels: 24
         max_obstacle_height: 2.0
         mark_threshold: 0
-        observation_sources: scan
+        observation_sources: scan camera # <--- 【修改】增加 camera 作为数据源
         scan:
           topic: /scan
           max_obstacle_height: 2.0
@@ -206,6 +207,15 @@ local_costmap:
           raytrace_min_range: 0.0
           obstacle_max_range: 4.5
           obstacle_min_range: 0.0
+        camera: # <--- 【新增】深度相机点云避障配置块
+          topic: /camera/camera/depth/color/points
+          max_obstacle_height: 1.5
+          min_obstacle_height: 0.05  
+          obstacle_max_range: 2.5
+          obstacle_min_range: 0.2
+          clearing: True
+          marking: True
+          data_type: "PointCloud2"
       static_layer:
         plugin: "nav2_costmap_2d::StaticLayer"
         map_subscribe_transient_local: True
@@ -217,7 +227,7 @@ global_costmap:
       update_frequency: 1.0
       publish_frequency: 1.0
       global_frame: map
-      robot_base_frame: base_link # <--- 终极修改点 4
+      robot_base_frame: base_link 
       use_sim_time: False
       robot_radius: 0.25 
       resolution: 0.05
@@ -297,14 +307,14 @@ behavior_server:
     assisted_teleop:
       plugin: "nav2_behaviors/AssistedTeleop"
     global_frame: camera_init
-    robot_base_frame: base_link # <--- 终极修改点 5
+    robot_base_frame: base_link 
     transform_tolerance: 0.1
     use_sim_time: False
     simulate_ahead_time: 2.0
-    max_rotational_vel: 1.0
+    max_rotational_vel: 0.6   # <--- 【修改】原为1.0，降低原地打转恢复时的最高转速
     min_rotational_vel: 0.4
-    rotational_acc_lim: 3.2
-
+    rotational_acc_lim: 1.5   # <--- 【修改】原为3.2，降低原地打转恢复时的加速度
+    
 robot_state_publisher:
   ros__parameters:
     use_sim_time: False
