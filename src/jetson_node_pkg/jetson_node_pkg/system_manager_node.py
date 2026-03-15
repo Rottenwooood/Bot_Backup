@@ -95,15 +95,22 @@ class SystemManager(Node):
             response.message = f'map file not found: {map_yaml_file}'
             return response
 
-        self.get_logger().info(f'Starting Navigation with map: {map_yaml_file}')
+        # 动态接收可选 nav2 参数文件
+        nav2_params_file = getattr(request, 'nav2_params_file', self.nav2_params_file)
+        if not os.path.exists(nav2_params_file):
+            response.success = False
+            response.message = f'Nav2 params file not found: {nav2_params_file}'
+            return response
+
+        self.get_logger().info(f'Starting Navigation with map: {map_yaml_file} and params: {nav2_params_file}')
 
         try:
             cmd = [
                 'ros2', 'launch',
                 self.nav_package,
                 self.nav_launch_file,
-                f'map_yaml_file:={map_yaml_file}',
-                f'nav2_params_file:={self.nav2_params_file}',
+                f'map:={map_yaml_file}',
+                f'params_file:={nav2_params_file}',
             ]
 
             self.current_process = subprocess.Popen(cmd)

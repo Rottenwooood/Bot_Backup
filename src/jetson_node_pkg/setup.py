@@ -25,6 +25,8 @@ setup(
             'cmd_vel_converter = jetson_node_pkg.cmd_vel_converter:main',
             'continuous_tf_pub = jetson_node_pkg.continuous_tf_pub:main',
             'system_manager_node = jetson_node_pkg.system_manager_node:main',
+            'stand_continuous_tf_pub = jetson_node_pkg.stand_continuous_tf_pub:main',
+            'stand_cmd_vel_converter = jetson_node_pkg.stand_cmd_vel_converter:main',
         ],
     },
 )

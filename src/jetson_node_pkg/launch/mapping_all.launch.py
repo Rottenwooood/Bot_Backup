@@ -12,10 +12,10 @@ def generate_launch_description():
     livox_driver_dir = get_package_share_directory('livox_ros_driver2')
 
     # 获取仿真时间参数 (回放数据设为 true，真雷达设为 false)
-    use_sim_time = LaunchConfiguration('use_sim_time', default='true')
+    use_sim_time = LaunchConfiguration('use_sim_time', default='false')
 
     return LaunchDescription([
-        DeclareLaunchArgument('use_sim_time', default_value='true'),
+        DeclareLaunchArgument('use_sim_time', default_value='false'),
 
         # 0. 启动 Livox 雷达驱动 (真雷达)
         IncludeLaunchDescription(
@@ -68,7 +68,7 @@ def generate_launch_description():
             output='screen',
             parameters=[
                 '/home/nvidia/ros2_ws/my_slam.yaml',
-                {'use_sim_time': True}
+                {'use_sim_time': False}
             ]
         )
     ])

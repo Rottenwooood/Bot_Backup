@@ -7,74 +7,65 @@ from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
 
 def generate_launch_description():
-    # 获取各包路径
     fast_lio_dir = get_package_share_directory('fast_lio')
     livox_driver_dir = get_package_share_directory('livox_ros_driver2')
     nav2_bringup_dir = get_package_share_directory('nav2_bringup')
-
-    # 新增 Launch 参数
-    map_yaml_file = LaunchConfiguration('map', default='/home/nvidia/ros2_ws/my_map.yaml')
-    nav2_params_file = LaunchConfiguration('params_file', default='/home/nvidia/ros2_ws/my_nav2_params.yaml')
+    
+    # 【修改点 1】加载你新写的站立版参数文件
+    map_yaml_file = '/home/nvidia/ros2_ws/my_map.yaml'
+    stand_nav2_params_file = '/home/nvidia/ros2_ws/stand_nav2_params.yaml'
     use_sim_time = LaunchConfiguration('use_sim_time', default='false')
 
     return LaunchDescription([
         DeclareLaunchArgument('use_sim_time', default_value='false'),
-        DeclareLaunchArgument('map', default_value='/home/nvidia/ros2_ws/my_map.yaml'),
-        DeclareLaunchArgument('params_file', default_value='/home/nvidia/ros2_ws/my_nav2_params.yaml'),
 
-        # Livox 驱动
+        # 0. 启动雷达
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(os.path.join(livox_driver_dir, 'launch_ROS2', 'msg_MID360_launch.py')),
             launch_arguments={'use_sim_time': use_sim_time}.items(),
         ),
 
-        # Fast-LIO
+        # 1. 启动 Fast-LIO
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(os.path.join(fast_lio_dir, 'launch', 'mapping.launch.py')),
             launch_arguments={'rviz': 'false', 'use_sim_time': use_sim_time}.items(),
         ),
 
-        # TF 修复
+        # 2. 【修改点 2】启动站立专用的 TF 节点
         Node(
             package='jetson_node_pkg',
-            executable='continuous_tf_pub',
-            name='continuous_tf_pub',
+            executable='stand_continuous_tf_pub', # <--- 注意这里名字换了！
+            name='stand_continuous_tf_pub',
             output='screen'
         ),
 
-        # 点云切片
+        # 3. 启动点云切片
         Node(
             package='pointcloud_to_laserscan',
             executable='pointcloud_to_laserscan_node',
             name='pointcloud_to_laserscan',
             remappings=[('cloud_in', '/cloud_registered_body'), ('scan', '/scan')],
             parameters=[{
-                'target_frame': 'base_link',
+                'target_frame': 'base_link', 
                 'transform_tolerance': 0.05,
-                'min_height': -0.05,
-                'max_height': 2.0,
-                'angle_min': -3.14159,
-                'angle_max': 3.14159,
-                'angle_increment': 0.0087,
-                'scan_time': 0.1,
-                'range_min': 0.3,
-                'range_max': 20.0,
-                'use_inf': True,
-                'use_sim_time': use_sim_time
+                # 【修改点 3】由于传感器变高，我们要切片的高度范围也要调整，重点扫前方0~1.5米的高度
+                'min_height': -0.10,  
+                'max_height': 1.5,   
+                # ... 其他参数保持不变 ...
             }]
         ),
 
-        # Nav2 启动，使用 Launch 参数
+        # 4. 启动 Nav2
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(os.path.join(nav2_bringup_dir, 'launch', 'bringup_launch.py')),
             launch_arguments={
                 'map': map_yaml_file,
-                'params_file': nav2_params_file,
+                'params_file': stand_nav2_params_file, # <--- 加载站立参数
                 'use_sim_time': use_sim_time
             }.items()
         ),
-
-        # MQTT 桥接
+        
+        # 5. 启动 MQTT
         Node(
             package='mqtt_client',
             executable='mqtt_client',
@@ -83,10 +74,10 @@ def generate_launch_description():
             parameters=['/home/nvidia/ros2_ws/src/mqtt_client/mqtt_client/config/params.yaml']
         ),
 
-        # cmd_vel 转换器
+        # 6. 启动控制桥接器
         Node(
             package='jetson_node_pkg',
-            executable='cmd_vel_converter',
+            executable='stand_cmd_vel_converter',
             name='cmd_vel_converter',
             output='screen'
         )
